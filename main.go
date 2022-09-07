@@ -17,17 +17,20 @@ func main() {
 	app.Use(fiberlogger.New())
 	app.Use(cors.New())
 
+	userConnectionPool := quiz.NewConnectionPool(logger)
+	go userConnectionPool.Run()
 	userGroup := app.Group("/user")
-	user := quiz.NewUser(userGroup, logger)
-	go user.Run()
+	quiz.NewUser(userGroup, logger, userConnectionPool)
 
+	adminConnectionPool := quiz.NewConnectionPool(logger)
+	go adminConnectionPool.Run()
 	adminGroup := app.Group("/admin")
-	admin := quiz.NewAdmin(adminGroup, logger)
-	go admin.Run()
+	quiz.NewAdmin(adminGroup, logger, adminConnectionPool)
 
+	overviewConnectionPool := quiz.NewConnectionPool(logger)
+	go overviewConnectionPool.Run()
 	overviewGroup := app.Group("/overview")
-	overview := quiz.NewAdmin(overviewGroup, logger)
-	go overview.Run()
+	quiz.NewOverview(overviewGroup, logger, overviewConnectionPool)
 
 	logger.Fatal().Err(app.Listen(":8898"))
 }
