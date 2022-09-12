@@ -8,7 +8,8 @@ import (
 )
 
 type userLoginRequestBody struct {
-	Hash string
+	Name   string
+	RoomId string
 }
 
 type User struct {
@@ -32,8 +33,8 @@ func (U *User) attachRoutes() {
 			U.logger.Debug().Str("error login", err.Error())
 			return err
 		}
-		if loginRequestBody.Hash != "" {
-			return ctx.SendStatus(fiber.StatusOK)
+		if loginRequestBody.RoomId != "" {
+			return ctx.JSON(fiber.Map{"token": "secrettoken"})
 		}
 
 		return ctx.SendStatus(fiber.StatusUnauthorized)
