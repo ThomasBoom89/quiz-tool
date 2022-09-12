@@ -1,1 +1,13 @@
-<p>user works!</p>
+<div class="flex justify-center pt-6">
+  <form class="flex flex-col gap-2" (ngSubmit)="onSubmitUserForm()" [formGroup]="userForm">
+    <div>
+      <label for="name">Name: </label>
+      <input class="text-black" id="name" type="text" formControlName="name">
+    </div>
+    <div>
+      <label for="email">Room: </label>
+      <input class="text-black" id="email" type="text" formControlName="roomId">
+    </div>
+    <button type="submit">Submit</button>
+  </form>
+</div>
