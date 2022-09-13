@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog"
 	"os"
 	quiz "quiz-tool/src"
+	"strings"
 )
 
 func main() {
@@ -34,8 +35,17 @@ func main() {
 	overviewGroup := v1.Group("/overview")
 	quiz.NewOverview(overviewGroup, logger, overviewConnectionPool)
 
-	app.Static("/", "./public")
-	app.Static("**", "./public")
+	app.Get("/:filename?", func(ctx *fiber.Ctx) error {
+		// todo: scan public dir for possible languages
+		filename := ctx.Params("filename", "")
+		headers := ctx.GetReqHeaders()
+		acceptedLanguageHeader := headers["Accept-Language"]
+		acceptedLanguages := strings.Split(acceptedLanguageHeader, ";")
+		languages := strings.SplitN(acceptedLanguages[0], ",", 2)
+		logger.Debug().Msg("languages detected: " + languages[0])
+
+		return ctx.SendFile("./public/" + languages[0] + "/" + filename)
+	})
 
 	logger.Fatal().Err(app.Listen(":8898"))
 }
