@@ -1,15 +1,11 @@
 import {NgModule} from '@angular/core';
 import {RouterModule, Routes} from '@angular/router';
-import {UserComponent} from './pages/user/user.component';
 import {AdminComponent} from './pages/admin/admin.component';
 import {OverviewComponent} from './pages/overview/overview.component';
 import {UserRoomComponent} from './pages/user-room/user-room.component';
+import {StartComponent} from './pages/start/start.component';
 
 const routes: Routes = [
-  {
-    path: 'user',
-    component: UserComponent,
-  },
   {
     path: 'user/room/:roomId',
     component: UserRoomComponent,
@@ -22,7 +18,7 @@ const routes: Routes = [
     path: 'overview',
     component: OverviewComponent,
   },
-  {path: '**', redirectTo: '/'},
+  {path: '**', component: StartComponent},
 ];
 
 @NgModule({
