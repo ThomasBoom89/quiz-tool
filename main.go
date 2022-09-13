@@ -13,24 +13,29 @@ func main() {
 	logger := zerolog.New(os.Stderr).With().Timestamp().Logger()
 
 	app := fiber.New()
-	app.Static("/", "./public")
 	app.Use(fiberlogger.New())
 	app.Use(cors.New())
 
+	api := app.Group("/api")
+	v1 := api.Group("/v1")
+
 	userConnectionPool := quiz.NewConnectionPool(logger)
 	go userConnectionPool.Run()
-	userGroup := app.Group("/user")
+	userGroup := v1.Group("/user")
 	quiz.NewUser(userGroup, logger, userConnectionPool)
 
 	adminConnectionPool := quiz.NewConnectionPool(logger)
 	go adminConnectionPool.Run()
-	adminGroup := app.Group("/admin")
+	adminGroup := v1.Group("/admin")
 	quiz.NewAdmin(adminGroup, logger, adminConnectionPool)
 
 	overviewConnectionPool := quiz.NewConnectionPool(logger)
 	go overviewConnectionPool.Run()
-	overviewGroup := app.Group("/overview")
+	overviewGroup := v1.Group("/overview")
 	quiz.NewOverview(overviewGroup, logger, overviewConnectionPool)
+
+	app.Static("/", "./public")
+	app.Static("**", "./public")
 
 	logger.Fatal().Err(app.Listen(":8898"))
 }

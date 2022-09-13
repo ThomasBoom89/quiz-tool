@@ -22,12 +22,14 @@ export class WebsocketService implements OnDestroy {
     this.socketShutdown();
   }
 
-  public createWebsocketConnection(endpoint: WsEndpoint): void {
-    // todo: handle token and validate it, else shutdown
+  public createWebsocketConnection(endpoint: WsEndpoint): boolean {
+    // todo: handle token and validate it, else shutdown, return false
     this.socket = webSocket(this.getUrl(endpoint));
     this.socketSubscription = this.socket.subscribe((message: any) => {
       console.warn('message received: ', message);
     });
+
+    return true
   }
 
   public sendMessage(message: string): void {
