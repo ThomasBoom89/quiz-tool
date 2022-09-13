@@ -49,6 +49,12 @@ func handleStatic(logger zerolog.Logger) func(ctx *fiber.Ctx) error {
 		}
 
 		filename := ctx.Params("filename", "")
+		re, _ := regexp.Compile(`[a-zA-Z0-9]*\.(js|css|txt|html)`)
+		if !re.MatchString(filename) {
+			filename = ""
+		}
+
+		// access to zero index does not panic because cap is 1
 		headers := ctx.GetReqHeaders()
 		acceptedLanguageHeader := headers["Accept-Language"]
 		acceptedLanguages := strings.Split(acceptedLanguageHeader, ";")
