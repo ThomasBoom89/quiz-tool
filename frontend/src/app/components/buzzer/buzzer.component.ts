@@ -1,14 +1,20 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, EventEmitter, HostListener, Output} from '@angular/core';
 
 @Component({
   selector: 'app-buzzer',
   templateUrl: './buzzer.component.html',
 })
-export class BuzzerComponent implements OnInit {
+export class BuzzerComponent {
+  @Output() buzzed: EventEmitter<boolean> = new EventEmitter<boolean>();
 
-  constructor() { }
-
-  ngOnInit(): void {
+  @HostListener('document:keypress', ['$event'])
+  keydown(e: KeyboardEvent) {
+    if (e.key === ' ') {
+      this.clicked()
+    }
   }
 
+  public clicked() {
+    this.buzzed.emit(true);
+  }
 }
