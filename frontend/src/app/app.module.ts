@@ -10,6 +10,7 @@ import {ReactiveFormsModule} from '@angular/forms';
 import {UserRoomComponent} from './pages/user-room/user-room.component';
 import {BuzzerComponent} from './components/buzzer/buzzer.component';
 import {HttpClientModule} from '@angular/common/http';
+import { StartComponent } from './pages/start/start.component';
 
 @NgModule({
   declarations: [
@@ -18,7 +19,8 @@ import {HttpClientModule} from '@angular/common/http';
     AdminComponent,
     OverviewComponent,
     UserRoomComponent,
-    BuzzerComponent
+    BuzzerComponent,
+    StartComponent
   ],
   imports: [
     BrowserModule,
