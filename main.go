@@ -7,6 +7,7 @@ import (
 	"github.com/rs/zerolog"
 	"os"
 	quiz "quiz-tool/src"
+	"regexp"
 	"strings"
 )
 
@@ -35,17 +36,37 @@ func main() {
 	overviewGroup := v1.Group("/overview")
 	quiz.NewOverview(overviewGroup, logger, overviewConnectionPool)
 
-	app.Get("/:filename?", func(ctx *fiber.Ctx) error {
-		// todo: scan public dir for possible languages
+	app.Get("/:filename?/**", handleStatic(logger))
+
+	logger.Fatal().Err(app.Listen(":8898"))
+}
+
+func handleStatic(logger zerolog.Logger) func(ctx *fiber.Ctx) error {
+	return func(ctx *fiber.Ctx) error {
+		dirs, err := os.ReadDir("./public")
+		if err != nil {
+			logger.Panic().Err(err)
+		}
+
 		filename := ctx.Params("filename", "")
+		re, _ := regexp.Compile(`[a-zA-Z0-9]*\.(js|css|txt|html)`)
+		if !re.MatchString(filename) {
+			filename = ""
+		}
+
+		// access to zero index does not panic because cap is 1
 		headers := ctx.GetReqHeaders()
 		acceptedLanguageHeader := headers["Accept-Language"]
 		acceptedLanguages := strings.Split(acceptedLanguageHeader, ";")
 		languages := strings.SplitN(acceptedLanguages[0], ",", 2)
 		logger.Debug().Msg("languages detected: " + languages[0])
 
-		return ctx.SendFile("./public/" + languages[0] + "/" + filename)
-	})
+		for _, dir := range dirs {
+			if dir.IsDir() && dir.Name() == languages[0] {
+				return ctx.SendFile("./public/" + languages[0] + "/" + filename)
+			}
+		}
 
-	logger.Fatal().Err(app.Listen(":8898"))
+		return ctx.SendFile("./public/en-US/" + filename)
+	}
 }
