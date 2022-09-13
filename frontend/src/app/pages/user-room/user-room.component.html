@@ -1,6 +1,6 @@
 <section class="flex flex-col gap-4 justify-center items-center h-full w-full">
   <h1>{{ currentQuestion }}</h1>
-  <app-buzzer></app-buzzer>
+  <app-buzzer (buzzed)="buzzed()"></app-buzzer>
   <p>
     Hier kommen noch die anderen hin
   </p>

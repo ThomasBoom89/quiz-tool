@@ -13,4 +13,7 @@ export class UserRoomComponent implements OnInit {
   ngOnInit(): void {
   }
 
+  public buzzed() {
+    console.warn('es wurde gebuzzed');
+  }
 }
