@@ -10,8 +10,10 @@ import {ReactiveFormsModule} from '@angular/forms';
 import {UserComponent} from './pages/user/user.component';
 import {BuzzerComponent} from './components/buzzer/buzzer.component';
 import {HttpClientModule} from '@angular/common/http';
-import { StartComponent } from './pages/start/start.component';
-import { AdminLoginComponent } from './components/admin-login/admin-login.component';
+import {StartComponent} from './pages/start/start.component';
+import {AdminLoginComponent} from './components/admin-login/admin-login.component';
+import {PlayerMiniComponent} from './components/player-mini/player-mini.component';
+import {PlayerStateComponent} from './components/player-state/player-state.component';
 
 @NgModule({
   declarations: [
@@ -22,7 +24,9 @@ import { AdminLoginComponent } from './components/admin-login/admin-login.compon
     UserComponent,
     BuzzerComponent,
     StartComponent,
-    AdminLoginComponent
+    AdminLoginComponent,
+    PlayerMiniComponent,
+    PlayerStateComponent,
   ],
   imports: [
     BrowserModule,
