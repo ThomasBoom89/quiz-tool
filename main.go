@@ -1,6 +1,7 @@
 package main
 
 import (
+	alp "github.com/ThomasBoom89/accept-language-parser"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	fiberlogger "github.com/gofiber/fiber/v2/middleware/logger"
@@ -8,7 +9,6 @@ import (
 	"os"
 	quiz "quiz-tool/src"
 	"regexp"
-	"strings"
 )
 
 func main() {
@@ -54,16 +54,17 @@ func handleStatic(logger zerolog.Logger) func(ctx *fiber.Ctx) error {
 			filename = ""
 		}
 
-		// access to zero index does not panic because cap is 1
 		headers := ctx.GetReqHeaders()
 		acceptedLanguageHeader := headers["Accept-Language"]
-		acceptedLanguages := strings.Split(acceptedLanguageHeader, ";")
-		languages := strings.SplitN(acceptedLanguages[0], ",", 2)
-		logger.Debug().Msg("languages detected: " + languages[0])
+		languages, err := alp.Parse(acceptedLanguageHeader)
+		logger.Debug().Msgf("languages detected: ", languages)
+		if err != nil {
+			return ctx.SendFile("./public/en-US/" + filename)
+		}
 
 		for _, dir := range dirs {
-			if dir.IsDir() && dir.Name() == languages[0] {
-				return ctx.SendFile("./public/" + languages[0] + "/" + filename)
+			if dir.IsDir() && dir.Name() == languages[0].Name {
+				return ctx.SendFile("./public/" + languages[0].Name + "/" + filename)
 			}
 		}
 
