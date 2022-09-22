@@ -1,6 +1,15 @@
-<div class="flex justify-center">
-  <section class="flex flex-col w-fit p-4 items-center justify-center border rounded">
-    <h1 i18n="Header for entry to room">Enter Room</h1>
-    <app-user></app-user>
+<h1 class="m-auto text-center text-5xl">Welcome to your personal quiz tool</h1>
+<div class="flex justify-evenly mt-24">
+  <section class="flex flex-col w-fit p-4 items-center justify-center border rounded min-w-[25rem]">
+    <h2 i18n="Header for start of room">Start Room</h2>
+    <app-admin-login></app-admin-login>
+  </section>
+  <section class="flex flex-col w-fit p-4 items-center justify-center border rounded min-w-[25rem]">
+    <h2 i18n="Header for entry to room">Enter Room</h2>
+    <app-user-login></app-user-login>
+  </section>
+  <section class="flex flex-col w-fit p-4 items-center justify-between border rounded min-w-[25rem]">
+    <h2 i18n="Header for entry to overview">Show Overview</h2>
+    <a [routerLink]="['/overview']">Show</a>
   </section>
 </div>
