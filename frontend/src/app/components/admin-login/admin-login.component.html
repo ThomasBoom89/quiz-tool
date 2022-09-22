@@ -1,0 +1,13 @@
+<div class="flex justify-center pt-6">
+  <form class="flex flex-col gap-2" (ngSubmit)="onSubmitAdminForm()" [formGroup]="adminForm">
+    <div class="flex flex-row justify-between">
+      <label for="name" class="mr-4">Name: </label>
+      <input class="text-black" id="name" type="text" formControlName="name">
+    </div>
+    <div class="flex flex-row justify-between">
+      <label for="password" class="mr-4">Password: </label>
+      <input class="text-black" id="password" type="password" formControlName="password">
+    </div>
+    <button type="submit">Login</button>
+  </form>
+</div>

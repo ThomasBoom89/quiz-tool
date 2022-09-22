@@ -1,0 +1,13 @@
+<div class="flex justify-center pt-6 ">
+  <form class="flex flex-col gap-2" (ngSubmit)="onSubmitUserForm()" [formGroup]="userForm">
+    <div class="flex flex-row justify-between">
+      <label for="name" class="mr-4">Name: </label>
+      <input class="text-black" id="name" type="text" formControlName="name">
+    </div>
+    <div class="flex flex-row justify-between">
+      <label for="roomId" class="mr-4">Room: </label>
+      <input class="text-black" id="roomId" type="text" formControlName="roomId">
+    </div>
+    <button type="submit">Enter</button>
+  </form>
+</div>
