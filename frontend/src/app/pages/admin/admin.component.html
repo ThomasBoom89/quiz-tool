@@ -1,1 +1,16 @@
-<p>admin works!</p>
+<div class="flex flex-col justify-between h-full pb-12">
+  <section>
+    <form class="flex flex-col" (ngSubmit)="onSubmitQuestionForm()" [formGroup]="questionForm">
+      <div>
+        <label for="question" class="pr-4">Enter Question:</label>
+        <input type="text" name="question" id="question" class="text-dark-font">
+      </div>
+      <input type="submit" value="Start">
+    </form>
+  </section>
+  <section class="flex flex-wrap gap-1 justify-center">
+    <div *ngFor="let player of players">
+      <app-player-mini [player]="player"></app-player-mini>
+    </div>
+  </section>
+</div>
