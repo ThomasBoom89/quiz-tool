@@ -4,7 +4,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
 	"github.com/rs/zerolog"
-	"strconv"
 )
 
 type adminLoginRequestBody struct {
@@ -13,13 +12,13 @@ type adminLoginRequestBody struct {
 }
 
 type Admin struct {
-	router         fiber.Router
-	logger         zerolog.Logger
-	connectionPool *ConnectionPool
+	router        fiber.Router
+	logger        zerolog.Logger
+	communication *Communication
 }
 
-func NewAdmin(router fiber.Router, logger zerolog.Logger, connectionPool *ConnectionPool) *Admin {
-	admin := &Admin{router: router, logger: logger, connectionPool: connectionPool}
+func NewAdmin(router fiber.Router, logger zerolog.Logger, communication *Communication) *Admin {
+	admin := &Admin{router: router, logger: logger, communication: communication}
 	admin.attachRoutes()
 
 	return admin
@@ -33,6 +32,7 @@ func (A *Admin) attachRoutes() {
 			A.logger.Debug().Str("error login", err.Error())
 			return err
 		}
+		// todo: return jwt
 		if loginRequestBody.Password != "" {
 			return ctx.SendStatus(fiber.StatusOK)
 		}
@@ -47,36 +47,14 @@ func (A *Admin) attachRoutes() {
 		return c.SendStatus(fiber.StatusUpgradeRequired)
 	})
 
+	// todo jwt middleware
 	A.router.Get("/ws", websocket.New(func(c *websocket.Conn) {
-		A.handleWebsocket(c)
+		jwt := c.Params("jwt", "")
+		A.handleWebsocket(c, jwt)
 	}))
 }
 
-func (A *Admin) handleWebsocket(c *websocket.Conn) {
-	// When the function returns, unregister the client and close the connection
-	defer func() {
-		A.connectionPool.Unregister(c)
-		c.Close()
-	}()
-
+func (A *Admin) handleWebsocket(c *websocket.Conn, jwt string) {
 	// Register the client
-	A.connectionPool.Register(c)
-
-	for {
-		messageType, message, err := c.ReadMessage()
-		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				A.logger.Error().Str("read error", err.Error())
-			}
-
-			return // Calls the deferred function, i.e. closes the connection on error
-		}
-
-		if messageType == websocket.TextMessage {
-			// Broadcast the received message
-			A.connectionPool.Broadcast(string(message))
-		} else {
-			A.logger.Error().Str("websocket message received of type", strconv.Itoa(messageType))
-		}
-	}
+	A.communication.RegisterAdmin(c, jwt)
 }

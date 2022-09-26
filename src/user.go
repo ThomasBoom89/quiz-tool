@@ -4,7 +4,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/websocket/v2"
 	"github.com/rs/zerolog"
-	"strconv"
 )
 
 type userLoginRequestBody struct {
@@ -13,13 +12,13 @@ type userLoginRequestBody struct {
 }
 
 type User struct {
-	router         fiber.Router
-	logger         zerolog.Logger
-	connectionPool *ConnectionPool
+	router        fiber.Router
+	logger        zerolog.Logger
+	communication *Communication
 }
 
-func NewUser(router fiber.Router, logger zerolog.Logger, connectionPool *ConnectionPool) *User {
-	user := &User{router: router, logger: logger, connectionPool: connectionPool}
+func NewUser(router fiber.Router, logger zerolog.Logger, communication *Communication) *User {
+	user := &User{router: router, logger: logger, communication: communication}
 	user.attachRoutes()
 
 	return user
@@ -33,6 +32,7 @@ func (U *User) attachRoutes() {
 			U.logger.Debug().Str("error login", err.Error())
 			return err
 		}
+		// todo: return jwt
 		if loginRequestBody.RoomId != "" {
 			return ctx.JSON(fiber.Map{"token": "secrettoken"})
 		}
@@ -47,36 +47,14 @@ func (U *User) attachRoutes() {
 		return c.SendStatus(fiber.StatusUpgradeRequired)
 	})
 
-	U.router.Get("/ws", websocket.New(func(c *websocket.Conn) {
-		U.handleWebsocket(c)
+	// todo jwt middleware
+	U.router.Get("/ws/:jwt?", websocket.New(func(c *websocket.Conn) {
+		jwt := c.Params("jwt", "")
+		U.handleWebsocket(c, jwt)
 	}))
 }
 
-func (U *User) handleWebsocket(c *websocket.Conn) {
-	// When the function returns, unregister the client and close the connection
-	defer func() {
-		U.connectionPool.Unregister(c)
-		c.Close()
-	}()
-
+func (U *User) handleWebsocket(c *websocket.Conn, jwt string) {
 	// Register the client
-	U.connectionPool.Register(c)
-
-	for {
-		messageType, message, err := c.ReadMessage()
-		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				U.logger.Error().Str("read error", err.Error())
-			}
-
-			return // Calls the deferred function, i.e. closes the connection on error
-		}
-
-		if messageType == websocket.TextMessage {
-			// Broadcast the received message
-			U.connectionPool.Broadcast(string(message))
-		} else {
-			U.logger.Error().Str("websocket message received of type", strconv.Itoa(messageType))
-		}
-	}
+	U.communication.RegisterUser(c, jwt)
 }
