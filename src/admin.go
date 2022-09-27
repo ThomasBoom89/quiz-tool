@@ -56,7 +56,7 @@ func (A *Admin) attachRoutes() {
 			return ctx.SendStatus(fiber.StatusInternalServerError)
 		}
 		if loginRequestBody.Password != "" {
-			return ctx.JSON(fiber.Map{"token": encodedToken})
+			return ctx.JSON(fiber.Map{"token": encodedToken, "id": claims["id"]})
 		}
 
 		return ctx.SendStatus(fiber.StatusUnauthorized)
@@ -64,7 +64,8 @@ func (A *Admin) attachRoutes() {
 
 	// JWT Middleware
 	A.router.Use(jwtware.New(jwtware.Config{
-		SigningKey: []byte("secret"),
+		SigningKey:  []byte("secret"),
+		TokenLookup: "query:token",
 	}))
 
 	A.router.Use(func(c *fiber.Ctx) error {

@@ -3,7 +3,7 @@
     <form class="flex flex-col" (ngSubmit)="onSubmitQuestionForm()" [formGroup]="questionForm">
       <div>
         <label for="question" class="pr-4">Enter Question:</label>
-        <input type="text" name="question" id="question" class="text-dark-font">
+        <input type="text" formControlName="question" id="question" class="text-dark-font">
       </div>
       <input type="submit" value="Start">
     </form>

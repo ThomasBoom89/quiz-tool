@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	Buzzered = iota
+	Buzzed = iota
 )
 
 const (
@@ -51,7 +51,7 @@ type response struct {
 type user struct {
 	Id      string `json:"id"`
 	Name    string `json:"name"`
-	IsAdmin bool   `json:"isAdmin"`
+	IsAdmin bool   `json:"-"`
 	Points  int32  `json:"points"`
 	State   int8   `json:"state"`
 }
@@ -62,7 +62,7 @@ type Communication struct {
 	adminPool    *ConnectionPool
 	overviewPool *ConnectionPool
 	userState    map[*websocket.Conn]*user
-	isBuzzered   *websocket.Conn
+	isBuzzed     *websocket.Conn
 }
 
 func NewCommunication(logger zerolog.Logger) *Communication {
@@ -72,12 +72,15 @@ func NewCommunication(logger zerolog.Logger) *Communication {
 	adminConnectionPool := NewConnectionPool(logger, adminReceived)
 	overviewReceived := make(chan recMsg)
 	overviewConnectionPool := NewConnectionPool(logger, overviewReceived)
+	userState := make(map[*websocket.Conn]*user)
 
 	communication := &Communication{
 		logger:       logger,
 		userPool:     userConnectionPool,
 		adminPool:    adminConnectionPool,
 		overviewPool: overviewConnectionPool,
+		isBuzzed:     nil,
+		userState:    userState,
 	}
 
 	go communication.run(userReceived, adminReceived)
@@ -111,12 +114,12 @@ func (C *Communication) run(userReceived, adminReceived chan recMsg) {
 
 func (C *Communication) handleUserRequest(message userRequest, connection *websocket.Conn) {
 	switch message.Action {
-	case Buzzered:
-		if C.isBuzzered != nil {
+	case Buzzed:
+		if C.isBuzzed != nil {
 			return
 		}
 		user := C.userState[connection]
-		C.isBuzzered = connection
+		C.isBuzzed = connection
 		user.State = active
 		C.sendUserStatus(user)
 	}
@@ -125,15 +128,17 @@ func (C *Communication) handleUserRequest(message userRequest, connection *webso
 func (C *Communication) handleAdminRequest(message adminRequest) {
 	switch message.Action {
 	case StartNewQuestion:
-		C.isBuzzered = nil
+		C.isBuzzed = nil
 		for _, user := range C.userState {
-			user.State = none
-			C.sendUserStatus(user)
+			if user.State != none {
+				user.State = none
+				C.sendUserStatus(user)
+			}
 		}
 		C.sendNewRound(message.Payload)
 	case SetWrongAnswer:
 		for connection, user := range C.userState {
-			if connection == C.isBuzzered {
+			if connection == C.isBuzzed {
 				user.State = blocked
 				user.Points -= 2
 			} else {
@@ -141,10 +146,10 @@ func (C *Communication) handleAdminRequest(message adminRequest) {
 			}
 			C.sendUserStatus(user)
 		}
-		C.isBuzzered = nil
+		C.isBuzzed = nil
 	case SetCorrectAnswer:
-		// add points to is buzzered user
-		user := C.userState[C.isBuzzered]
+		// add points to is buzzed user
+		user := C.userState[C.isBuzzed]
 		user.Points += 5
 		C.sendUserStatus(user)
 	case RemoveUser:

@@ -57,7 +57,7 @@ func (U *User) attachRoutes() {
 		}
 
 		if loginRequestBody.RoomId != "" {
-			return ctx.JSON(fiber.Map{"token": encodedToken})
+			return ctx.JSON(fiber.Map{"token": encodedToken, "id": claims["id"]})
 		}
 
 		return ctx.SendStatus(fiber.StatusUnauthorized)
@@ -65,7 +65,8 @@ func (U *User) attachRoutes() {
 
 	// JWT Middleware
 	U.router.Use(jwtware.New(jwtware.Config{
-		SigningKey: []byte("secret"),
+		SigningKey:  []byte("secret"),
+		TokenLookup: "query:token",
 	}))
 
 	U.router.Use(func(c *fiber.Ctx) error {
