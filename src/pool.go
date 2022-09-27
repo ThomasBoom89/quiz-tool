@@ -13,10 +13,15 @@ type ConnectionPool struct {
 	register   chan *websocket.Conn
 	unregister chan *websocket.Conn
 	broadcast  chan interface{}
-	received   chan []byte
+	received   chan recMsg
 }
 
-func NewConnectionPool(logger zerolog.Logger, received chan []byte) *ConnectionPool {
+type recMsg struct {
+	Payload    []byte
+	Connection *websocket.Conn
+}
+
+func NewConnectionPool(logger zerolog.Logger, received chan recMsg) *ConnectionPool {
 	connectionPool := &ConnectionPool{logger: logger}
 	connectionPool.clients = make(map[*websocket.Conn]bool) // Note: although large maps with pointer-like types (e.g. strings) as keys are slow, using pointers themselves as keys is acceptable and fast
 	connectionPool.register = make(chan *websocket.Conn)
@@ -57,7 +62,7 @@ func (C *ConnectionPool) Register(connection *websocket.Conn) {
 	C.register <- connection
 
 	for {
-		messageType, message, err := connection.ReadMessage()
+		messageType, rawMessage, err := connection.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				C.logger.Error().Str("read error", err.Error())
@@ -68,6 +73,10 @@ func (C *ConnectionPool) Register(connection *websocket.Conn) {
 
 		if messageType == websocket.TextMessage {
 			// Broadcast the received message
+			message := recMsg{
+				Payload:    rawMessage,
+				Connection: connection,
+			}
 			C.received <- message
 		} else {
 			C.logger.Debug().Str("websocket message received of type", strconv.Itoa(messageType))
@@ -80,8 +89,8 @@ func (C *ConnectionPool) Unregister(connection *websocket.Conn) {
 	connection.Close()
 }
 
-func (C *ConnectionPool) Broadcast(connection *websocket.Conn, message string) {
-	C.logger.Debug().Str("send message to client: ", message)
+func (C *ConnectionPool) Broadcast(connection *websocket.Conn, message interface{}) {
+	C.logger.Debug().Msgf("send message to client: ", message)
 	C.sendMessage(connection, message)
 }
 

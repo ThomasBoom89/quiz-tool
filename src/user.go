@@ -2,8 +2,12 @@ package quiz
 
 import (
 	"github.com/gofiber/fiber/v2"
+	jwtware "github.com/gofiber/jwt/v3"
 	"github.com/gofiber/websocket/v2"
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	"time"
 )
 
 type userLoginRequestBody struct {
@@ -32,13 +36,37 @@ func (U *User) attachRoutes() {
 			U.logger.Debug().Str("error login", err.Error())
 			return err
 		}
-		// todo: return jwt
+		generatedUuid, err := uuid.NewRandom()
+		if err != nil {
+			return ctx.SendStatus(fiber.StatusInternalServerError)
+		}
+
+		// Create the Claims
+		claims := jwt.MapClaims{
+			"name":    loginRequestBody.Name,
+			"id":      generatedUuid.String(),
+			"isAdmin": false,
+			"exp":     time.Now().Add(time.Hour * 72).Unix(),
+		}
+		// Create token
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+		// Generate encoded token and send it as response.
+		encodedToken, err := token.SignedString([]byte("secret"))
+		if err != nil {
+			return ctx.SendStatus(fiber.StatusInternalServerError)
+		}
+
 		if loginRequestBody.RoomId != "" {
-			return ctx.JSON(fiber.Map{"token": "secrettoken"})
+			return ctx.JSON(fiber.Map{"token": encodedToken})
 		}
 
 		return ctx.SendStatus(fiber.StatusUnauthorized)
 	})
+
+	// JWT Middleware
+	U.router.Use(jwtware.New(jwtware.Config{
+		SigningKey: []byte("secret"),
+	}))
 
 	U.router.Use(func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) { // Returns true if the client requested upgrade to the WebSocket protocol
@@ -47,14 +75,12 @@ func (U *User) attachRoutes() {
 		return c.SendStatus(fiber.StatusUpgradeRequired)
 	})
 
-	// todo jwt middleware
-	U.router.Get("/ws/:jwt?", websocket.New(func(c *websocket.Conn) {
-		jwt := c.Params("jwt", "")
-		U.handleWebsocket(c, jwt)
+	U.router.Get("/ws", websocket.New(func(c *websocket.Conn) {
+		U.handleWebsocket(c)
 	}))
 }
 
-func (U *User) handleWebsocket(c *websocket.Conn, jwt string) {
+func (U *User) handleWebsocket(c *websocket.Conn) {
 	// Register the client
-	U.communication.RegisterUser(c, jwt)
+	U.communication.RegisterUser(c)
 }

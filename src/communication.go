@@ -3,6 +3,7 @@ package quiz
 import (
 	"encoding/json"
 	"github.com/gofiber/websocket/v2"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/rs/zerolog"
 )
 
@@ -18,15 +19,23 @@ const (
 )
 
 const (
-	UserEntered = iota
+	Init = iota
+	UserEntered
 	UserLeft
 	UserStatus
 	NewRound
 )
 
+const (
+	none = iota
+	active
+	blocked
+)
+
 type userRequest struct {
-	Action  int8   `json:"action"`
-	Payload string `json:"payload"`
+	Action     int8   `json:"action"`
+	Payload    string `json:"payload"`
+	Connection *websocket.Conn
 }
 
 type adminRequest struct {
@@ -40,10 +49,11 @@ type response struct {
 }
 
 type user struct {
-	Id     string `json:"id"`
-	Name   string `json:"name"`
-	Points int32  `json:"points"`
-	State  int8   `json:"state"`
+	Id      string `json:"id"`
+	Name    string `json:"name"`
+	IsAdmin bool   `json:"isAdmin"`
+	Points  int32  `json:"points"`
+	State   int8   `json:"state"`
 }
 
 type Communication struct {
@@ -51,14 +61,16 @@ type Communication struct {
 	userPool     *ConnectionPool
 	adminPool    *ConnectionPool
 	overviewPool *ConnectionPool
+	userState    map[*websocket.Conn]*user
+	isBuzzered   *websocket.Conn
 }
 
 func NewCommunication(logger zerolog.Logger) *Communication {
-	userReceived := make(chan []byte)
+	userReceived := make(chan recMsg)
 	userConnectionPool := NewConnectionPool(logger, userReceived)
-	adminReceived := make(chan []byte)
+	adminReceived := make(chan recMsg)
 	adminConnectionPool := NewConnectionPool(logger, adminReceived)
-	overviewReceived := make(chan []byte)
+	overviewReceived := make(chan recMsg)
 	overviewConnectionPool := NewConnectionPool(logger, overviewReceived)
 
 	communication := &Communication{
@@ -73,21 +85,21 @@ func NewCommunication(logger zerolog.Logger) *Communication {
 	return communication
 }
 
-func (C *Communication) run(userReceived, adminReceived chan []byte) {
+func (C *Communication) run(userReceived, adminReceived chan recMsg) {
 	// todo maybe it is better to listen to each received channel on its own to handle admin messages instant
 	for {
 		select {
 		case message := <-userReceived:
-			C.logger.Debug().Str("user: ", string(message))
-			userRequest, err := unmarshal(message, userRequest{})
+			C.logger.Debug().Str("user: ", string(message.Payload))
+			userRequest, err := unmarshal(message.Payload, userRequest{})
 			if err != nil {
 				C.logger.Debug().Err(err)
 				return
 			}
-			C.handleUserRequest(userRequest)
+			C.handleUserRequest(userRequest, message.Connection)
 		case message := <-adminReceived:
-			C.logger.Debug().Str("admin: ", string(message))
-			adminRequest, err := unmarshal(message, adminRequest{})
+			C.logger.Debug().Str("admin: ", string(message.Payload))
+			adminRequest, err := unmarshal(message.Payload, adminRequest{})
 			if err != nil {
 				C.logger.Debug().Err(err)
 				return
@@ -97,76 +109,149 @@ func (C *Communication) run(userReceived, adminReceived chan []byte) {
 	}
 }
 
-func (C *Communication) handleUserRequest(message userRequest) {
+func (C *Communication) handleUserRequest(message userRequest, connection *websocket.Conn) {
 	switch message.Action {
 	case Buzzered:
-		// todo buzzer action dinge
+		if C.isBuzzered != nil {
+			return
+		}
+		user := C.userState[connection]
+		C.isBuzzered = connection
+		user.State = active
+		C.sendUserStatus(user)
 	}
 }
 
 func (C *Communication) handleAdminRequest(message adminRequest) {
 	switch message.Action {
 	case StartNewQuestion:
+		C.isBuzzered = nil
+		for _, user := range C.userState {
+			user.State = none
+			C.sendUserStatus(user)
+		}
+		C.sendNewRound(message.Payload)
 	case SetWrongAnswer:
+		for connection, user := range C.userState {
+			if connection == C.isBuzzered {
+				user.State = blocked
+				user.Points -= 2
+			} else {
+				user.Points += 1
+			}
+			C.sendUserStatus(user)
+		}
+		C.isBuzzered = nil
 	case SetCorrectAnswer:
+		// add points to is buzzered user
+		user := C.userState[C.isBuzzered]
+		user.Points += 5
+		C.sendUserStatus(user)
 	case RemoveUser:
-
+		// todo
 	}
 }
 
-func (C *Communication) sendNewRoundResponse(question string) {
+func (C *Communication) sendInitialUserData(connection *websocket.Conn, pool *ConnectionPool) {
+	var users []*user
+	for _, user := range C.userState {
+		users = append(users, user)
+	}
+	response := response{
+		Action:  Init,
+		Payload: users,
+	}
+	pool.Broadcast(connection, response)
+}
+
+func (C *Communication) sendUserEntered(user *user) {
+	response := response{
+		Action:  UserEntered,
+		Payload: user,
+	}
+	C.adminPool.BroadcastAll(response)
+	C.userPool.BroadcastAll(response)
+	C.overviewPool.BroadcastAll(response)
+}
+
+func (C *Communication) sendUserLeft(id string) {
+	response := response{
+		Action:  UserLeft,
+		Payload: id,
+	}
+	C.adminPool.BroadcastAll(response)
+	C.userPool.BroadcastAll(response)
+	C.overviewPool.BroadcastAll(response)
+}
+
+func (C *Communication) sendUserStatus(user *user) {
+	response := response{
+		Action:  UserStatus,
+		Payload: user,
+	}
+	C.adminPool.BroadcastAll(response)
+	C.userPool.BroadcastAll(response)
+	C.overviewPool.BroadcastAll(response)
+}
+
+func (C *Communication) sendNewRound(question string) {
 	response := response{
 		Action:  NewRound,
 		Payload: question,
 	}
-	C.adminPool.BroadcastAll(response)
+	C.userPool.BroadcastAll(response)
+	C.overviewPool.BroadcastAll(response)
 }
 
-func (C *Communication) sendUserResponse(connection *websocket.Conn, action int8) {
-	// todo get user data by connection
-	user := user{
-		Id:     "",
-		Name:   "",
-		Points: 0,
-		State:  0,
+func (C *Communication) RegisterUser(connection *websocket.Conn) {
+	user, err := C.getUserFromConnection(connection)
+	if err != nil {
+		return
 	}
-	response := response{
-		Action:  action,
-		Payload: user,
-	}
-	C.adminPool.BroadcastAll(response)
-}
-
-func (C *Communication) RegisterUser(connection *websocket.Conn, jwt string) {
-	// When the function returns, unregister the client and close the connection
+	C.userState[connection] = user
 	defer func() {
-		// todo send message to all other connection that one player is gone
+		C.sendUserLeft(user.Id)
+		delete(C.userState, connection)
 		C.userPool.Unregister(connection)
 		connection.Close()
 	}()
-	// todo send initial message to connection like other users etc.
+	// todo check for race condition
+	C.sendUserEntered(user)
+	C.sendInitialUserData(connection, C.userPool)
 	C.userPool.Register(connection)
 }
 
-func (C *Communication) RegisterAdmin(connection *websocket.Conn, jwt string) {
-	// When the function returns, unregister the client and close the connection
+func (C *Communication) RegisterAdmin(connection *websocket.Conn) {
 	defer func() {
-		// todo disconnect all users
+		// todo disconnect all users || maybe later ;)
 		C.adminPool.Unregister(connection)
 		connection.Close()
 	}()
-	// todo send initial message to connection like other users etc.
+	C.sendInitialUserData(connection, C.adminPool)
 	C.adminPool.Register(connection)
 }
 
 func (C *Communication) RegisterOverview(connection *websocket.Conn) {
-	// When the function returns, unregister the client and close the connection
 	defer func() {
 		C.overviewPool.Unregister(connection)
 		connection.Close()
 	}()
-	// todo send initial message to connection like other users etc.
+	C.sendInitialUserData(connection, C.overviewPool)
 	C.overviewPool.Register(connection)
+}
+
+func (C *Communication) getUserFromConnection(connection *websocket.Conn) (*user, error) {
+	token := connection.Locals("user").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+	user := &user{
+		Id:      claims["id"].(string),
+		Name:    claims["name"].(string),
+		IsAdmin: claims["isAdmin"].(bool),
+		Points:  0,
+		State:   none,
+	}
+
+	return user, nil
 }
 
 func unmarshal[T any](message []byte, genericInterface T) (T, error) {
