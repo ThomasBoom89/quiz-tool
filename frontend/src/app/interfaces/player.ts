@@ -1,7 +1,7 @@
 import {PlayerState} from '../enums/player-state';
 
 export interface Player {
-  id: number;
+  id: string;
   name: string;
   points: number;
   state: PlayerState;

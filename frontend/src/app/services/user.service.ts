@@ -3,11 +3,11 @@ import {WebsocketService} from './websocket.service';
 import {Router} from '@angular/router';
 import {Observable} from 'rxjs';
 import {HttpClient} from '@angular/common/http';
-import {LoginResponse} from '../interfaces/login-response';
 import {JwtService} from './jwt.service';
 import {WsEndpoint} from '../enums/ws-endpoint';
-import {UserAction} from '../enums/user-action';
 import {QuizService} from './quiz.service';
+import {UserAction} from '../enums/user-action';
+import {LoginResponse} from '../interfaces/login-response';
 
 @Injectable({
   providedIn: 'root'
