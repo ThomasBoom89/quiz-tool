@@ -2,6 +2,8 @@ import {Component} from '@angular/core';
 import {Player} from '../../interfaces/player';
 import {PlayerState} from '../../enums/player-state';
 import {FormControl, FormGroup, Validators} from '@angular/forms';
+import {AdminService} from '../../services/admin.service';
+import {AdminAction} from '../../enums/admin-action';
 
 interface questionFormGroup {
   question: FormControl<string>;
@@ -36,12 +38,15 @@ export class AdminComponent {
 
   public questionForm: FormGroup<questionFormGroup>;
 
-  constructor() {
+  constructor(private readonly adminService: AdminService) {
+    this.adminService.connect();
     this.questionForm = new FormGroup<questionFormGroup>({
       question: new FormControl<string>('', {nonNullable: true, validators: Validators.required}),
     });
   }
 
   public onSubmitQuestionForm() {
+    console.warn(this.questionForm.controls);
+    this.adminService.setAction(AdminAction.StartNewQuestion, this.questionForm.controls.question.value);
   }
 }

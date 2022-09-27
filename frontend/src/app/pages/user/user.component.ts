@@ -1,19 +1,18 @@
-import {Component, OnInit} from '@angular/core';
+import {Component} from '@angular/core';
+import {UserService} from '../../services/user.service';
 
 @Component({
   selector: 'app-user',
   templateUrl: './user.component.html',
 })
-export class UserComponent implements OnInit {
+export class UserComponent {
   currentQuestion: string = 'Hier könnte deine Frage stehen!';
 
-  constructor() {
-  }
-
-  ngOnInit(): void {
+  constructor(private readonly userService: UserService) {
+    this.userService.connect();
   }
 
   public buzzed() {
-    console.warn('es wurde gebuzzed');
+    this.userService.setBuzzed();
   }
 }
