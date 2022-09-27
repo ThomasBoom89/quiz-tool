@@ -2,8 +2,12 @@ package quiz
 
 import (
 	"github.com/gofiber/fiber/v2"
+	jwtware "github.com/gofiber/jwt/v3"
 	"github.com/gofiber/websocket/v2"
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog"
+	"time"
 )
 
 type adminLoginRequestBody struct {
@@ -32,13 +36,36 @@ func (A *Admin) attachRoutes() {
 			A.logger.Debug().Str("error login", err.Error())
 			return err
 		}
-		// todo: return jwt
+		generatedUuid, err := uuid.NewRandom()
+		if err != nil {
+			return ctx.SendStatus(fiber.StatusInternalServerError)
+		}
+
+		// Create the Claims
+		claims := jwt.MapClaims{
+			"name":    loginRequestBody.Username,
+			"id":      generatedUuid.String(),
+			"isAdmin": true,
+			"exp":     time.Now().Add(time.Hour * 72).Unix(),
+		}
+		// Create token
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+		// Generate encoded token and send it as response.
+		encodedToken, err := token.SignedString([]byte("secret"))
+		if err != nil {
+			return ctx.SendStatus(fiber.StatusInternalServerError)
+		}
 		if loginRequestBody.Password != "" {
-			return ctx.SendStatus(fiber.StatusOK)
+			return ctx.JSON(fiber.Map{"token": encodedToken})
 		}
 
 		return ctx.SendStatus(fiber.StatusUnauthorized)
 	})
+
+	// JWT Middleware
+	A.router.Use(jwtware.New(jwtware.Config{
+		SigningKey: []byte("secret"),
+	}))
 
 	A.router.Use(func(c *fiber.Ctx) error {
 		if websocket.IsWebSocketUpgrade(c) { // Returns true if the client requested upgrade to the WebSocket protocol
@@ -47,14 +74,12 @@ func (A *Admin) attachRoutes() {
 		return c.SendStatus(fiber.StatusUpgradeRequired)
 	})
 
-	// todo jwt middleware
 	A.router.Get("/ws", websocket.New(func(c *websocket.Conn) {
-		jwt := c.Params("jwt", "")
-		A.handleWebsocket(c, jwt)
+		A.handleWebsocket(c)
 	}))
 }
 
-func (A *Admin) handleWebsocket(c *websocket.Conn, jwt string) {
+func (A *Admin) handleWebsocket(c *websocket.Conn) {
 	// Register the client
-	A.communication.RegisterAdmin(c, jwt)
+	A.communication.RegisterAdmin(c)
 }
