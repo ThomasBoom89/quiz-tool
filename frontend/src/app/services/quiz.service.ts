@@ -19,20 +19,7 @@ export class QuizService implements OnDestroy {
         console.warn('event received: ', websocketEvent);
         switch (websocketEvent.action) {
           case QuizAction.Init:
-            if (websocketEvent.payload === null) {
-              this.playerMap.clear();
-              break;
-            }
-            const playerMapClone = new Map<string, Player>(this.playerMap);
-            for (const player of websocketEvent.payload as Player[]) {
-              if (playerMapClone.has(player.id)) {
-                playerMapClone.delete(player.id);
-              }
-              this.addPlayer(player);
-            }
-            playerMapClone.forEach((player: Player) => {
-              this.removePlayer(player.id);
-            });
+            this.initialization(websocketEvent);
             break;
           case QuizAction.UserEntered:
             this.addPlayer(websocketEvent.payload as Player);
@@ -48,6 +35,23 @@ export class QuizService implements OnDestroy {
             break;
         }
       });
+  }
+
+  private initialization(websocketEvent: WebsocketEvent): void {
+    if (websocketEvent.payload === null) {
+      this.playerMap.clear();
+      return;
+    }
+    const playerMapClone = new Map<string, Player>(this.playerMap);
+    for (const player of websocketEvent.payload as Player[]) {
+      if (playerMapClone.has(player.id)) {
+        playerMapClone.delete(player.id);
+      }
+      this.addPlayer(player);
+    }
+    playerMapClone.forEach((player: Player) => {
+      this.removePlayer(player.id);
+    });
   }
 
   ngOnDestroy() {
