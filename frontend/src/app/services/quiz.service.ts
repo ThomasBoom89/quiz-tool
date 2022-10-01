@@ -19,9 +19,20 @@ export class QuizService implements OnDestroy {
         console.warn('event received: ', websocketEvent);
         switch (websocketEvent.action) {
           case QuizAction.Init:
-            for (const player of websocketEvent.payload) {
+            if (websocketEvent.payload === null) {
+              this.playerMap.clear();
+              break;
+            }
+            const playerMapClone = new Map<string, Player>(this.playerMap);
+            for (const player of websocketEvent.payload as Player[]) {
+              if (playerMapClone.has(player.id)) {
+                playerMapClone.delete(player.id);
+              }
               this.addPlayer(player);
             }
+            playerMapClone.forEach((player: Player) => {
+              this.removePlayer(player.id);
+            });
             break;
           case QuizAction.UserEntered:
             this.addPlayer(websocketEvent.payload as Player);
