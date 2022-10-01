@@ -1,1 +1,6 @@
-<div class="bg-red-800 rounded-full h-32 w-32" (click)="clicked()"></div>
+<div
+  class="rounded-full h-32 w-32"
+  (click)="clicked()"
+  [class.bg-red-800]="!isBuzzed"
+  [class.bg-green-800]="isBuzzed">
+</div>

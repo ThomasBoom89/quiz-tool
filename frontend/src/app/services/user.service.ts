@@ -3,11 +3,12 @@ import {WebsocketService} from './websocket.service';
 import {Router} from '@angular/router';
 import {Observable} from 'rxjs';
 import {HttpClient} from '@angular/common/http';
-import {LoginResponse} from '../interfaces/login-response';
 import {JwtService} from './jwt.service';
 import {WsEndpoint} from '../enums/ws-endpoint';
-import {UserAction} from '../enums/user-action';
 import {QuizService} from './quiz.service';
+import {UserAction} from '../enums/user-action';
+import {LoginResponse} from '../interfaces/login-response';
+import {Player} from '../interfaces/player';
 
 @Injectable({
   providedIn: 'root'
@@ -50,5 +51,29 @@ export class UserService {
       roomId: roomId,
     };
     return this.httpClient.post<LoginResponse>(UserService.LOGIN_URL, param);
+  }
+
+  public getPlayers(): Player[] {
+    return this.quizService.getPlayers().filter((player: Player) => {
+      return player.id !== this.id;
+    });
+  }
+
+  public getPoints(): number {
+    const player = this.quizService.getPlayer(this.id);
+    if (player === undefined) {
+      return 0;
+    }
+
+    return player.points;
+  }
+
+  public getState(): number {
+    const player = this.quizService.getPlayer(this.id);
+    if (player === undefined) {
+      return 0;
+    }
+
+    return player.state;
   }
 }
