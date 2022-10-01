@@ -81,4 +81,12 @@ export class QuizService implements OnDestroy {
   private removePlayer(id: string): void {
     this.playerMap.delete(id);
   }
+
+  public getPlayer(id: string): Player | undefined {
+    if (!this.playerMap.has(id)) {
+      return undefined;
+    }
+
+    return this.playerMap.get(id);
+  }
 }

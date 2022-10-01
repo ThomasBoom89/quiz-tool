@@ -58,4 +58,22 @@ export class UserService {
       return player.id !== this.id;
     });
   }
+
+  public getPoints(): number {
+    const player = this.quizService.getPlayer(this.id);
+    if (player === undefined) {
+      return 0;
+    }
+
+    return player.points;
+  }
+
+  public getState(): number {
+    const player = this.quizService.getPlayer(this.id);
+    if (player === undefined) {
+      return 0;
+    }
+
+    return player.state;
+  }
 }
