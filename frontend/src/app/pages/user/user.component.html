@@ -1,7 +1,9 @@
 <section class="flex flex-col gap-4 justify-center items-center h-full w-full">
   <h1>{{ currentQuestion }}</h1>
   <app-buzzer (buzzed)="buzzed()"></app-buzzer>
-  <p>
-    Hier kommen noch die anderen hin
-  </p>
+  <section class="flex flex-wrap gap-1 justify-center">
+    <div *ngFor="let player of userService.getPlayers()">
+      <app-player-mini [player]="player"></app-player-mini>
+    </div>
+  </section>
 </section>

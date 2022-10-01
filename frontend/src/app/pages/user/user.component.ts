@@ -8,7 +8,9 @@ import {UserService} from '../../services/user.service';
 export class UserComponent {
   currentQuestion: string = 'Hier könnte deine Frage stehen!';
 
-  constructor(private readonly userService: UserService) {
+  constructor(
+    public readonly userService: UserService,
+  ) {
     this.userService.connect();
   }
 

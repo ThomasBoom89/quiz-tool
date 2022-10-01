@@ -8,6 +8,7 @@ import {WsEndpoint} from '../enums/ws-endpoint';
 import {QuizService} from './quiz.service';
 import {UserAction} from '../enums/user-action';
 import {LoginResponse} from '../interfaces/login-response';
+import {Player} from '../interfaces/player';
 
 @Injectable({
   providedIn: 'root'
@@ -50,5 +51,11 @@ export class UserService {
       roomId: roomId,
     };
     return this.httpClient.post<LoginResponse>(UserService.LOGIN_URL, param);
+  }
+
+  public getPlayers(): Player[] {
+    return this.quizService.getPlayers().filter((player: Player) => {
+      return player.id !== this.id;
+    });
   }
 }
