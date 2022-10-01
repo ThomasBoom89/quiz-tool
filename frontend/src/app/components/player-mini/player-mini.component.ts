@@ -1,4 +1,4 @@
-import {Component, Input} from '@angular/core';
+import {Component, EventEmitter, Input, Output} from '@angular/core';
 import {Player} from '../../interfaces/player';
 
 @Component({
@@ -7,6 +7,9 @@ import {Player} from '../../interfaces/player';
 })
 export class PlayerMiniComponent {
   @Input() player!: Player
+  @Input() isAdmin: boolean = false;
+
+  @Output() removePlayer: EventEmitter<string> = new EventEmitter<string>();
 
   constructor() {
   }
