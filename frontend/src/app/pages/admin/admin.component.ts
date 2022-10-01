@@ -50,4 +50,16 @@ export class AdminComponent {
     console.warn(this.questionForm.controls);
     this.adminService.setAction(AdminAction.StartNewQuestion, this.questionForm.controls.question.value);
   }
+
+  public setCorrectAnswer() {
+    this.adminService.setAction(AdminAction.SetCorrectAnswer);
+  }
+
+  public setWrongAnswer() {
+    this.adminService.setAction(AdminAction.SetWrongAnswer);
+  }
+
+  public removePlayer(playerId: string) {
+    this.adminService.setAction(AdminAction.RemoveUser, playerId);
+  }
 }
