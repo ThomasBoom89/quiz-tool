@@ -1,0 +1,5 @@
+<section class="flex flex-wrap gap-1 justify-center">
+  <div *ngFor="let player of players">
+    <app-player-mini [player]="player" [isAdmin]="isAdmin"></app-player-mini>
+  </div>
+</section>
