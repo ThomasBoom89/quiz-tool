@@ -1,10 +1,9 @@
-<div class="flex flex-row">
-  <section>
-    <p>Your points: {{ userService.getPoints() }}</p>
-  </section>
-  <section class="flex flex-col gap-4 justify-center items-center h-full w-full">
-    <p>{{ quizService.getQuestion() }}</p>
-    <app-buzzer [isBuzzed]="isBuzzed()" (buzzed)="buzzed()"></app-buzzer>
-    <app-players [players]="userService.getPlayers()"></app-players>
-  </section>
+<div class="w-full h-full grid grid-rows-user-page grid-cols-3 justify-items-center">
+    <app-current-question class="col-span-3"></app-current-question>
+    <section class="self-center text-2xl">
+      <p>Your points: {{ userService.getPoints() }}</p>
+    </section>
+    <app-buzzer class="self-center" [isBuzzed]="isBuzzed()" (buzzed)="buzzed()"></app-buzzer>
+    <p class=""></p>
+    <app-players class="mt-4 col-span-3" [players]="userService.getPlayers()"></app-players>
 </div>

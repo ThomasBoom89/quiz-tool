@@ -1,0 +1,7 @@
+<section class="flex flex-row justify-center items-center w-full text-3xl">
+    <p *ngIf="quizService.getQuestion() == ''">No current question!</p>
+    <div *ngIf="quizService.getQuestion() != ''" class="flex flex-col justify-center items-center w-full h-full">
+        <p class="font-bold mb-4">Current Question: </p>
+        <p class="text-3xl">{{ quizService.getQuestion() }}</p>
+    </div>
+</section>

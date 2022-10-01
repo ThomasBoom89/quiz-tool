@@ -15,6 +15,7 @@ import {AdminLoginComponent} from './components/admin-login/admin-login.componen
 import {PlayerMiniComponent} from './components/player-mini/player-mini.component';
 import {PlayerStateComponent} from './components/player-state/player-state.component';
 import {PlayersComponent} from './components/players/players.component';
+import { CurrentQuestionComponent } from './components/current-question/current-question.component';
 
 @NgModule({
   declarations: [
@@ -29,6 +30,7 @@ import {PlayersComponent} from './components/players/players.component';
     PlayerMiniComponent,
     PlayerStateComponent,
     PlayersComponent,
+    CurrentQuestionComponent,
   ],
   imports: [
     BrowserModule,

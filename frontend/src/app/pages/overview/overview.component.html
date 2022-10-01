@@ -1,6 +1,7 @@
-<div class="flex flex-row">
-  <section class="">
-    <p>Current Question: {{ quizService.getQuestion() }}</p>
+<div class="flex flex-col justify-between h-full">
+  <app-current-question></app-current-question>
+  <section class="flex flex-col w-full pb-16">
+    <p *ngIf="quizService.getPlayers().length <= 0">No players connected</p>
+    <app-players [players]="quizService.getPlayers()"></app-players>
   </section>
-  <app-players [players]="quizService.getPlayers()"></app-players>
 </div>
