@@ -150,10 +150,24 @@ func (C *Communication) handleAdminRequest(message adminRequest) {
 	case SetCorrectAnswer:
 		// add points to is buzzed user
 		user := C.userState[C.isBuzzed]
+		C.isBuzzed = nil
+		user.State = none
 		user.Points += 5
 		C.sendUserStatus(user)
 	case RemoveUser:
-		// todo
+		for connection, user := range C.userState {
+			if user.Id == message.Payload {
+				C.userPool.Unregister(connection)
+				if C.isBuzzed == connection {
+					C.isBuzzed = nil
+				}
+				C.sendUserLeft(message.Payload)
+				delete(C.userState, connection)
+				break
+			}
+
+			C.sendUserLeft(message.Payload)
+		}
 	}
 }
 
