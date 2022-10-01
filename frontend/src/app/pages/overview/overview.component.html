@@ -1,3 +1,6 @@
-<section>
-works
-</section>
+<div class="flex flex-row">
+  <section class="">
+    <p>Current Question: {{ quizService.getQuestion() }}</p>
+  </section>
+  <app-players [players]="quizService.getPlayers()"></app-players>
+</div>

@@ -12,9 +12,5 @@
     <button class="bg-green-800" (click)="setCorrectAnswer()">Correct Answer</button>
     <button class="bg-red-800" (click)="setWrongAnswer()">Wrong Answer</button>
   </section>
-  <section class="flex flex-wrap gap-1 justify-center">
-    <div *ngFor="let player of quizService.getPlayers()">
-      <app-player-mini [player]="player" [isAdmin]="true" (removePlayer)="removePlayer($event)"></app-player-mini>
-    </div>
-  </section>
+  <app-players [players]="quizService.getPlayers()" [isAdmin]="true"></app-players>
 </div>

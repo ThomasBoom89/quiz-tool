@@ -5,11 +5,6 @@
   <section class="flex flex-col gap-4 justify-center items-center h-full w-full">
     <p>{{ quizService.getQuestion() }}</p>
     <app-buzzer [isBuzzed]="isBuzzed()" (buzzed)="buzzed()"></app-buzzer>
-    <section class="flex flex-wrap gap-1 justify-center">
-      <div *ngFor="let player of userService.getPlayers()">
-        <app-player-mini [player]="player"></app-player-mini>
-      </div>
-    </section>
+    <app-players [players]="userService.getPlayers()"></app-players>
   </section>
-
 </div>

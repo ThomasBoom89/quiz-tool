@@ -58,8 +58,4 @@ export class AdminComponent {
   public setWrongAnswer() {
     this.adminService.setAction(AdminAction.SetWrongAnswer);
   }
-
-  public removePlayer(playerId: string) {
-    this.adminService.setAction(AdminAction.RemoveUser, playerId);
-  }
 }

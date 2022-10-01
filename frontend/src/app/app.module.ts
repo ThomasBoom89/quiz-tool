@@ -14,6 +14,7 @@ import {StartComponent} from './pages/start/start.component';
 import {AdminLoginComponent} from './components/admin-login/admin-login.component';
 import {PlayerMiniComponent} from './components/player-mini/player-mini.component';
 import {PlayerStateComponent} from './components/player-state/player-state.component';
+import {PlayersComponent} from './components/players/players.component';
 
 @NgModule({
   declarations: [
@@ -27,6 +28,7 @@ import {PlayerStateComponent} from './components/player-state/player-state.compo
     AdminLoginComponent,
     PlayerMiniComponent,
     PlayerStateComponent,
+    PlayersComponent,
   ],
   imports: [
     BrowserModule,
