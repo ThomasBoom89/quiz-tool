@@ -1,5 +1,4 @@
 import {Component, Input, OnInit} from '@angular/core';
-import {UserService} from '../../services/user.service';
 import {AdminAction} from '../../enums/admin-action';
 import {AdminService} from '../../services/admin.service';
 import {Player} from '../../interfaces/player';
