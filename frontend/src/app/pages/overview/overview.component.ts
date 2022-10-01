@@ -1,14 +1,17 @@
-import { Component, OnInit } from '@angular/core';
+import {Component} from '@angular/core';
+import {QuizService} from '../../services/quiz.service';
+import {OverviewService} from '../../services/overview.service';
 
 @Component({
   selector: 'app-overview',
   templateUrl: './overview.component.html',
 })
-export class OverviewComponent implements OnInit {
+export class OverviewComponent {
 
-  constructor() { }
-
-  ngOnInit(): void {
+  constructor(
+    public readonly overviewService: OverviewService,
+    public readonly quizService: QuizService,
+  ) {
+    this.overviewService.connect();
   }
-
 }
